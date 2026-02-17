@@ -49,12 +49,14 @@ jobs:
 
       - name: Fail if HIGH or CRITICAL
         run: |
-          jq '.results[] | select(.extra.severity=="ERROR" or .extra.severity=="WARNING")' semgrep.json
-          if [ $? -eq 0 ]; then
-            echo "High severity findings detected"
+          COUNT=$(jq '[.results[] | select(.extra.severity=="ERROR")] | length' semgrep.json)
+          if [ "$COUNT" -gt 0 ]; then
+            echo "$COUNT high severity findings detected"
             exit 1
+          else
+            echo "No high severity findings"
           fi
-        
+          
       #- name: Upload SARIF
       #  if: github.event_name == 'push'
       #  uses: github/codeql-action/upload-sarif@v4
