@@ -46,11 +46,19 @@ jobs:
             --exclude '__pycache__/' \
             --sarif --output semgrep.sarif \
             .
-            
-      - name: Upload SARIF
-        if: github.event_name == 'push'
-        uses: github/codeql-action/upload-sarif@v4
-        with:
-          sarif_file: semgrep.sarif
+
+      - name: Fail if HIGH or CRITICAL
+        run: |
+          jq '.results[] | select(.extra.severity=="ERROR" or .extra.severity=="WARNING")' semgrep.json
+          if [ $? -eq 0 ]; then
+            echo "High severity findings detected"
+            exit 1
+          fi
+        
+      #- name: Upload SARIF
+      #  if: github.event_name == 'push'
+      #  uses: github/codeql-action/upload-sarif@v4
+      #  with:
+      #    sarif_file: semgrep.sarif
 
 
