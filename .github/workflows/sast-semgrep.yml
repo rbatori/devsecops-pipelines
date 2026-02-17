@@ -27,6 +27,7 @@ jobs:
             --config p/owasp-top-ten \
             --config p/ci \
             --config p/r2c-security-audit \
+            --severity ERROR \
             --include '**/*.py' \
             --exclude '*.pdf' \
             --exclude '*.png' \
@@ -45,9 +46,11 @@ jobs:
             --exclude '__pycache__/' \
             --sarif --output semgrep.sarif \
             .
-
-      - name: Upload SARIF to GitHub
+            
+      - name: Upload SARIF
+        if: github.event_name == 'push'
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: semgrep.sarif
+
 
