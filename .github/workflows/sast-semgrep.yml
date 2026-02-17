@@ -1,0 +1,53 @@
+name: SAST - Semgrep Enterprise Mode
+
+on:
+  workflow_call:
+
+jobs:
+  semgrep:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      security-events: write
+
+    container:
+      image: semgrep/semgrep:1.76.0  # versão estável fixa
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep Scan
+        run: |
+          semgrep scan \
+            --config p/security-audit \
+            --config p/python \
+            --config p/secrets \
+            --config p/owasp-top-ten \
+            --config p/ci \
+            --config p/r2c-security-audit \
+            --include '**/*.py' \
+            --exclude '*.pdf' \
+            --exclude '*.png' \
+            --exclude '*.jpg' \
+            --exclude '*.jpeg' \
+            --exclude '*.svg' \
+            --exclude '*.zip' \
+            --exclude '*.tar' \
+            --exclude '*.gz' \
+            --exclude '*.exe' \
+            --exclude '*.dll' \
+            --exclude '*.bin' \
+            --exclude 'node_modules/' \
+            --exclude 'dist/' \
+            --exclude 'build/' \
+            --exclude '__pycache__/' \
+            --sarif --output semgrep.sarif \
+            .
+
+      - name: Upload SARIF to GitHub
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
+
