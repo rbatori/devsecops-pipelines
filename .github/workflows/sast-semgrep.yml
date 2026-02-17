@@ -46,7 +46,6 @@ jobs:
             --exclude '__pycache__/' \
             --json \
             --output semgrep.json || true
-            .
 
       - name: Fail if HIGH or CRITICAL
         run: |
