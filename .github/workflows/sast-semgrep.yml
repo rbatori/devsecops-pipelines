@@ -44,7 +44,6 @@ jobs:
             --exclude 'dist/' \
             --exclude 'build/' \
             --exclude '__pycache__/' \
-            --sarif --output semgrep.sarif \
             --json \
             --output semgrep.json || true
             .
