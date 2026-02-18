@@ -45,25 +45,42 @@ jobs:
             --exclude '__pycache__/' \
             --json \
             --output semgrep.json || true
-
+            
       - name: Annotate findings and fail if HIGH
         run: |
           COUNT=$(jq '[.results[] | select(.extra.severity=="ERROR")] | length' semgrep.json)
-
+      
           if [ "$COUNT" -gt 0 ]; then
             echo ""
             echo "========================================="
             echo " HIGH SEVERITY FINDINGS DETECTED: $COUNT"
             echo "========================================="
             echo ""
-
+      
+            jq -r '
+              .results[]
+              | select(.extra.severity=="ERROR")
+              | "----------------------------------------\n" +
+                "Rule: " + .check_id + "\n" +
+                "Severity: " + .extra.severity + "\n" +
+                "File: " + .path + "\n" +
+                "Line: " + (.start.line|tostring) + "\n" +
+                "Column: " + (.start.col|tostring) + "\n" +
+                "Message: " + .extra.message + "\n" +
+                "----------------------------------------"
+            ' semgrep.json
+      
+            echo ""
+            echo "---- GitHub Annotations ----"
+      
             jq -r '
               .results[]
               | select(.extra.severity=="ERROR")
               | "::error file=\(.path),line=\(.start.line)::[\(.check_id)] \(.extra.message)"
             ' semgrep.json
-
+      
             exit 1
           else
             echo "No high severity findings"
           fi
+      
