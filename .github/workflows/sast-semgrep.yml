@@ -9,7 +9,6 @@ jobs:
 
     permissions:
       contents: read
-      security-events: write
 
     container:
       image: semgrep/semgrep:1.76.0  # versão estável fixa
@@ -47,20 +46,24 @@ jobs:
             --json \
             --output semgrep.json || true
 
-      - name: Fail if HIGH or CRITICAL
+      - name: Annotate findings and fail if HIGH
         run: |
           COUNT=$(jq '[.results[] | select(.extra.severity=="ERROR")] | length' semgrep.json)
+
           if [ "$COUNT" -gt 0 ]; then
-            echo "$COUNT high severity findings detected"
+            echo ""
+            echo "========================================="
+            echo " HIGH SEVERITY FINDINGS DETECTED: $COUNT"
+            echo "========================================="
+            echo ""
+
+            jq -r '
+              .results[]
+              | select(.extra.severity=="ERROR")
+              | "::error file=\(.path),line=\(.start.line)::[\(.check_id)] \(.extra.message)"
+            ' semgrep.json
+
             exit 1
           else
             echo "No high severity findings"
           fi
-          
-      #- name: Upload SARIF
-      #  if: github.event_name == 'push'
-      #  uses: github/codeql-action/upload-sarif@v4
-      #  with:
-      #    sarif_file: semgrep.sarif
-
-
